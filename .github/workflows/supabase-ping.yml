@@ -1,0 +1,23 @@
+name: Supabase Ping
+
+on:
+  schedule:
+    - cron: "0 8 * * *" # Tous les jours à 8h UTC
+  workflow_dispatch: # Permet de lancer manuellement
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/lists?limit=1")
+          echo "Response code: $response"
+          if [ "$response" -lt 200 ] || [ "$response" -gt 299 ]; then
+            echo "Ping failed with status $response"
+            exit 1
+          fi
+          echo "Ping successful!"
