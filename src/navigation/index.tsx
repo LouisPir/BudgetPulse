@@ -5,17 +5,46 @@ import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../context/ThemeContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { RegisterScreen } from '../screens/RegisterScreen';
+import { HomeScreen } from '../screens/HomeScreen';
+import { AddTransactionScreen } from '../screens/AddTransactionScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
+import { ChangeEmailScreen } from '../screens/ChangeEmailScreen';
+import { ChangePasswordScreen } from '../screens/ChangePasswordScreen';
+import { ThemeScreen } from '../screens/ThemeScreen';
+import { LanguageScreen } from '../screens/LanguageScreen';
+import { AboutScreen } from '../screens/AboutScreen';
+import { Transaction } from '../types';
 
-export type Screen = 'Home' | 'Auth' | 'Register';
+type Screen =
+  | 'Home'
+  | 'Auth'
+  | 'Register'
+  | 'AddTransaction'
+  | 'EditTransaction'
+  | 'Settings'
+  | 'ChangeEmail'
+  | 'ChangePassword'
+  | 'Theme'
+  | 'Language'
+  | 'About';
 
-export const Navigation = () => {
+const AppContent = () => {
   const { user, loading } = useAuth();
   const { theme } = useTheme();
   const [screen, setScreen] = useState<Screen>('Home');
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   useEffect(() => {
     const backAction = () => {
       if (screen === 'Register') { setScreen('Auth'); return true; }
+      if (screen === 'AddTransaction') { setScreen('Home'); return true; }
+      if (screen === 'EditTransaction') { setSelectedTransaction(null); setScreen('Home'); return true; }
+      if (screen === 'Settings') { setScreen('Home'); return true; }
+      if (screen === 'ChangeEmail') { setScreen('Settings'); return true; }
+      if (screen === 'ChangePassword') { setScreen('Settings'); return true; }
+      if (screen === 'Theme') { setScreen('Settings'); return true; }
+      if (screen === 'Language') { setScreen('Settings'); return true; }
+      if (screen === 'About') { setScreen('Settings'); return true; }
       return false;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
@@ -24,30 +53,87 @@ export const Navigation = () => {
 
   if (loading) {
     return (
-      <SafeAreaProvider>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      </SafeAreaProvider>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
     );
   }
 
   if (!user) {
+    if (screen === 'Register') {
+      return <RegisterScreen onGoToLogin={() => setScreen('Auth')} />;
+    }
+    return <LoginScreen onGoToRegister={() => setScreen('Register')} />;
+  }
+
+  if (screen === 'AddTransaction') {
     return (
-      <SafeAreaProvider>
-        {screen === 'Register'
-          ? <RegisterScreen onGoToLogin={() => setScreen('Auth')} />
-          : <LoginScreen onGoToRegister={() => setScreen('Register')} />
-        }
-      </SafeAreaProvider>
+      <AddTransactionScreen
+        onBack={() => setScreen('Home')}
+        onSuccess={() => setScreen('Home')}
+      />
     );
   }
 
+  if (screen === 'EditTransaction' && selectedTransaction) {
+    return (
+      <AddTransactionScreen
+        onBack={() => { setSelectedTransaction(null); setScreen('Home'); }}
+        onSuccess={() => { setSelectedTransaction(null); setScreen('Home'); }}
+        transaction={selectedTransaction}
+      />
+    );
+  }
+
+  if (screen === 'Settings') {
+    return (
+      <SettingsScreen
+        onBack={() => setScreen('Home')}
+        onChangeEmail={() => setScreen('ChangeEmail')}
+        onChangePassword={() => setScreen('ChangePassword')}
+        onTheme={() => setScreen('Theme')}
+        onLanguage={() => setScreen('Language')}
+        onAbout={() => setScreen('About')}
+      />
+    );
+  }
+
+  if (screen === 'ChangeEmail') {
+    return <ChangeEmailScreen onBack={() => setScreen('Settings')} onSuccess={() => setScreen('Settings')} />;
+  }
+
+  if (screen === 'ChangePassword') {
+    return <ChangePasswordScreen onBack={() => setScreen('Settings')} onSuccess={() => setScreen('Settings')} />;
+  }
+
+  if (screen === 'Theme') {
+    return <ThemeScreen onBack={() => setScreen('Settings')} />;
+  }
+
+  if (screen === 'Language') {
+    return <LanguageScreen onBack={() => setScreen('Settings')} />;
+  }
+
+  if (screen === 'About') {
+    return <AboutScreen onBack={() => setScreen('Settings')} />;
+  }
+
+  return (
+    <HomeScreen
+      onAddTransaction={() => setScreen('AddTransaction')}
+      onEditTransaction={(transaction) => {
+        setSelectedTransaction(transaction);
+        setScreen('EditTransaction');
+      }}
+      onSettings={() => setScreen('Settings')}
+    />
+  );
+};
+
+export const Navigation = () => {
   return (
     <SafeAreaProvider>
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <AppContent />
     </SafeAreaProvider>
   );
 };
