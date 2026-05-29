@@ -25,6 +25,13 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "supabaseUrl": "EXPO_PUBLIC_SUPABASE_URL",
+      "supabaseAnonKey": "EXPO_PUBLIC_SUPABASE_ANON_KEY"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }
