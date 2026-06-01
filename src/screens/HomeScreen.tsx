@@ -20,7 +20,7 @@ export const HomeScreen = ({ onAddTransaction, onEditTransaction, onSettings }: 
   const { theme } = useTheme();
   const { tr } = useLanguage();
   const styles = makeStyles(theme);
-
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -52,7 +52,7 @@ export const HomeScreen = ({ onAddTransaction, onEditTransaction, onSettings }: 
     if (activePeriod === 'this_month') {
       result = result.filter((t) => {
         const d = new Date(t.date);
-        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        return d.getFullYear() === currentDate.getFullYear() && d.getMonth() === currentDate.getMonth();
       });
     } else if (activePeriod === 'last_month') {
       const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -112,7 +112,8 @@ export const HomeScreen = ({ onAddTransaction, onEditTransaction, onSettings }: 
     setActivePeriod('this_month');
     setActiveSort('date_newest');
   };
-
+  const isCurrentMonth = currentDate.getMonth() === new Date().getMonth() &&
+    currentDate.getFullYear() === new Date().getFullYear();
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -121,7 +122,28 @@ export const HomeScreen = ({ onAddTransaction, onEditTransaction, onSettings }: 
           <Text style={{ fontSize: theme.fontSize.xl }}>⚙️</Text>
         </TouchableOpacity>
       </View>
-
+      {/* Navigation mois */}
+      <View style={styles.monthNav}>
+        <TouchableOpacity
+          style={styles.monthButton}
+          onPress={() => setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+        >
+          <Text style={styles.monthButtonText}>‹</Text>
+        </TouchableOpacity>
+        <Text style={styles.monthLabel}>
+          {currentDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+        </Text>
+        <TouchableOpacity
+          style={[styles.monthButton, isCurrentMonth && styles.monthButtonDisabled]}
+          onPress={() => {
+            const next = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+            if (next <= new Date()) setCurrentDate(next);
+          }}
+          disabled={isCurrentMonth}
+        >
+          <Text style={[styles.monthButtonText, isCurrentMonth && styles.monthButtonTextDisabled]}>›</Text>
+        </TouchableOpacity>
+      </View>
       <BalanceCard transactions={filtered} />
 
       <View style={styles.searchRow}>
@@ -225,4 +247,18 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
     shadowOpacity: 0.2, shadowRadius: 4,
   },
   fabText: { color: theme.colors.surface, fontSize: 28, fontWeight: 'bold' },
+  monthNav: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg, paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1, borderBottomColor: theme.colors.border,
+  },
+  monthButton: {
+    width: 36, height: 36, borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.accent, justifyContent: 'center', alignItems: 'center',
+  },
+  monthButtonDisabled: { opacity: 0.3 },
+  monthButtonText: { fontSize: theme.fontSize.xxl, color: theme.colors.primary, fontWeight: 'bold' },
+  monthButtonTextDisabled: { color: theme.colors.textSecondary },
+  monthLabel: { fontSize: theme.fontSize.md, fontWeight: '600', color: theme.colors.text, textTransform: 'capitalize' },
 });

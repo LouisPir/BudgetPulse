@@ -21,14 +21,18 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.louispir.BudgetPulse"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "supabaseUrl": "EXPO_PUBLIC_SUPABASE_URL",
-      "supabaseAnonKey": "EXPO_PUBLIC_SUPABASE_ANON_KEY"
+      "supabaseAnonKey": "EXPO_PUBLIC_SUPABASE_ANON_KEY",
+      "eas": {
+        "projectId": "857d4e14-b98e-4362-bb6f-c53208e37851"
+      }
     },
     "plugins": [
       "expo-secure-store"
