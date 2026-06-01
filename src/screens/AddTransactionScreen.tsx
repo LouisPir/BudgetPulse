@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Theme } from '../config/theme';
 import { addTransaction, updateTransaction } from '../services/transactions';
-import { Transaction } from '../types';
+import { Transaction, ReimbursementProfile } from '../types';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../constants/categories';
 import { getCategoryKey } from '../utils/format';
+import { getProfiles } from '../services/reimbursementProfiles';
 
 interface Props {
   onBack: () => void;
@@ -27,7 +28,23 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
   const [note, setNote] = useState(transaction?.note ?? '');
   const [date, setDate] = useState(transaction?.date ?? new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
-
+  const [reimbursementStatus, setReimbursementStatus] = useState<'none' | 'pending' | 'reimbursed'>(
+    transaction?.reimbursement_status ?? 'none'
+  );
+  const [reimbursedBy, setReimbursedBy] = useState(transaction?.reimbursed_by ?? '');
+  const [profiles, setProfiles] = useState<ReimbursementProfile[]>([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
+  useEffect(() => {
+    const load = async () => {
+      setLoadingProfiles(true);
+      try {
+        const data = await getProfiles();
+        setProfiles(data);
+      } catch {}
+      finally { setLoadingProfiles(false); }
+    };
+    load();
+  }, []);
   const isEditing = !!transaction;
   const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
@@ -35,8 +52,11 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
     setType(newType);
     const newCategories = newType === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
     setCategory(newCategories[0]);
+    if (newType === 'income') {
+      setReimbursementStatus('none');
+      setReimbursedBy('');
+    }
   };
-
   const handleSubmit = async () => {
     const parsedAmount = parseFloat(amount.replace(',', '.'));
     if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -53,6 +73,8 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
         title: title.trim() || null,
         note: note.trim() || null,
         date,
+        reimbursement_status: reimbursementStatus,
+        reimbursed_by: reimbursementStatus === 'pending' ? (reimbursedBy.trim() || null) : null,
       };
 
       if (isEditing) {
@@ -152,7 +174,70 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
             placeholderTextColor={theme.colors.textSecondary}
             multiline
           />
+          {type === 'expense' && (
+            <>
+              {/* Remboursement */}
+              <Text style={styles.label}>{tr('transaction.reimbursement', 'Remboursement')}</Text>
+              <View style={styles.typeRow}>
+                <TouchableOpacity
+                  style={[styles.typeButton, reimbursementStatus === 'none' && styles.typeButtonActive]}
+                  onPress={() => setReimbursementStatus('none')}
+                >
+                  <Text style={[styles.typeButtonText, reimbursementStatus === 'none' && styles.typeButtonTextActive]}>
+                    {tr('transaction.reimbursement.none', 'Aucun')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.typeButton, reimbursementStatus === 'pending' && styles.typeButtonActive]}
+                  onPress={() => setReimbursementStatus('pending')}
+                >
+                  <Text style={[styles.typeButtonText, reimbursementStatus === 'pending' && styles.typeButtonTextActive]}>
+                    🕐 {tr('transaction.reimbursement.pending', 'À rembourser')}
+                  </Text>
+                </TouchableOpacity>
+                {isEditing && (
+                  <TouchableOpacity
+                    style={[styles.typeButton, reimbursementStatus === 'reimbursed' && styles.typeButtonReimbursed]}
+                    onPress={() => setReimbursementStatus('reimbursed')}
+                  >
+                    <Text style={[styles.typeButtonText, reimbursementStatus === 'reimbursed' && styles.typeButtonTextActive]}>
+                      ✅ {tr('transaction.reimbursement.reimbursed', 'Remboursé')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
 
+              {reimbursementStatus === 'pending' && (
+                <>
+                  <Text style={styles.label}>{tr('transaction.reimbursedBy', 'Par qui ?')}</Text>
+                  {loadingProfiles ? (
+                    <ActivityIndicator color={theme.colors.primary} />
+                  ) : (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+                      {profiles.map((profile) => (
+                        <TouchableOpacity
+                          key={profile.id}
+                          style={[styles.categoryChip, reimbursedBy === profile.name && styles.categoryChipActive]}
+                          onPress={() => setReimbursedBy(profile.name)}
+                        >
+                          <Text style={[styles.categoryChipText, reimbursedBy === profile.name && styles.categoryChipTextActive]}>
+                            {profile.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  )}
+                  <TextInput
+                    style={styles.input}
+                    value={reimbursedBy}
+                    onChangeText={setReimbursedBy}
+                    placeholder={tr('transaction.reimbursedByPlaceholder', 'Nom ou profil...')}
+                    placeholderTextColor={theme.colors.textSecondary}
+                  />
+                </>
+              )}
+            </>
+          )}
           {/* Date */}
           <Text style={styles.label}>{tr('transaction.date', 'Date (YYYY-MM-DD)')}</Text>
           <TextInput
@@ -218,5 +303,7 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
     backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md, alignItems: 'center', marginTop: theme.spacing.md,
   },
+  typeButtonActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
   buttonText: { color: theme.colors.surface, fontSize: theme.fontSize.lg, fontWeight: '600' },
+  typeButtonReimbursed: { backgroundColor: theme.colors.success, borderColor: theme.colors.success },
 });

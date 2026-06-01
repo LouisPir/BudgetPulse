@@ -14,10 +14,12 @@ interface Props {
   onAbout: () => void;
   onStats: () => void;
   onBudget: () => void;
+  onReimbursementProfiles: () => void;
+  onPendingReimbursements: () => void;
 }
 
 
-export const SettingsScreen = ({ onBack, onChangeEmail, onChangePassword, onTheme, onLanguage, onAbout, onStats, onBudget }: Props) => {
+export const SettingsScreen = ({ onBack, onChangeEmail, onChangePassword, onTheme, onLanguage, onAbout, onStats, onBudget, onPendingReimbursements, onReimbursementProfiles }: Props) => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { tr } = useLanguage();
@@ -60,6 +62,18 @@ export const SettingsScreen = ({ onBack, onChangeEmail, onChangePassword, onThem
           </TouchableOpacity>
           <TouchableOpacity style={styles.row} onPress={onBudget}>
             <Text style={styles.rowText}>🎯 {tr('settings.budget', 'Budgets')}</Text>
+            <Text style={styles.rowArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.sectionTitle}>{tr('settings.reimbursements', 'Remboursements')}</Text>
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.row} onPress={onPendingReimbursements}>
+            <Text style={styles.rowText}>💸 {tr('settings.pendingReimbursements', 'En attente')}</Text>
+            <Text style={styles.rowArrow}>›</Text>
+          </TouchableOpacity>
+          <View style={styles.separator} />
+          <TouchableOpacity style={styles.row} onPress={onReimbursementProfiles}>
+            <Text style={styles.rowText}>👤 {tr('settings.reimbursementProfiles', 'Profils')}</Text>
             <Text style={styles.rowArrow}>›</Text>
           </TouchableOpacity>
         </View>

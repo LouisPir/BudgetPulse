@@ -48,12 +48,12 @@ export const BudgetScreen = ({ onBack }: Props) => {
       .filter((t) =>
         t.type === 'expense' &&
         t.category === category &&
+        t.reimbursement_status !== 'reimbursed' &&
         new Date(t.date).getMonth() === now.getMonth() &&
         new Date(t.date).getFullYear() === now.getFullYear()
       )
       .reduce((sum, t) => sum + t.amount, 0);
   };
-
   const getBudgetStatus = (spent: number, budget: number): 'ok' | 'warning' | 'danger' => {
     const ratio = spent / budget;
     if (ratio >= 1) return 'danger';

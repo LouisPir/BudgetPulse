@@ -7,6 +7,8 @@ export interface Transaction {
   title: string | null;
   note: string | null;
   date: string;
+  reimbursement_status: 'none' | 'pending' | 'reimbursed';
+  reimbursed_by: string | null;
   created_at: string;
 }
 
@@ -15,5 +17,12 @@ export interface Budget {
   user_id: string;
   category: string;
   amount: number;
+  created_at: string;
+}
+
+export interface ReimbursementProfile {
+  id: string;
+  user_id: string;
+  name: string;
   created_at: string;
 }
