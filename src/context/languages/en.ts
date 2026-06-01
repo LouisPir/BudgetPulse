@@ -114,6 +114,9 @@ const en: Record<string, string> = {
   'category.remboursement': 'Reimbursement',
   'category.interets': 'Interest',
   'category.cadeau': 'Gift',
+
+  'transaction.title': 'Title (optional)',
+  'transaction.titlePlaceholder': 'Ex: Auchan groceries',
 };
 
 export default en;

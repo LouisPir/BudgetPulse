@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -22,6 +22,7 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
 
   const [amount, setAmount] = useState(transaction ? String(transaction.amount / 100) : '');
   const [type, setType] = useState<'expense' | 'income'>(transaction?.type ?? 'expense');
+  const [title, setTitle] = useState(transaction?.title ?? '');
   const [category, setCategory] = useState(transaction?.category ?? EXPENSE_CATEGORIES[0]);
   const [note, setNote] = useState(transaction?.note ?? '');
   const [date, setDate] = useState(transaction?.date ?? new Date().toISOString().split('T')[0]);
@@ -49,6 +50,7 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
         amount: Math.round(parsedAmount * 100),
         type,
         category,
+        title: title.trim() || null,
         note: note.trim() || null,
         date,
       };
@@ -67,99 +69,112 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack}>
-          <Text style={styles.backText}>{tr('back', '← Retour')}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {isEditing ? tr('transaction.edit', 'Modifier') : tr('transaction.add', 'Ajouter')}
-        </Text>
-        <View style={{ width: 60 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.content}>
-
-        {/* Type */}
-        <Text style={styles.label}>{tr('transaction.type', 'Type')}</Text>
-        <View style={styles.typeRow}>
-          <TouchableOpacity
-            style={[styles.typeButton, type === 'expense' && styles.typeButtonExpense]}
-            onPress={() => handleTypeChange('expense')}
-          >
-            <Text style={[styles.typeButtonText, type === 'expense' && styles.typeButtonTextActive]}>
-              💸 {tr('transaction.expense', 'Dépense')}
-            </Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onBack}>
+            <Text style={styles.backText}>{tr('back', '← Retour')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.typeButton, type === 'income' && styles.typeButtonIncome]}
-            onPress={() => handleTypeChange('income')}
-          >
-            <Text style={[styles.typeButtonText, type === 'income' && styles.typeButtonTextActive]}>
-              💰 {tr('transaction.income', 'Revenu')}
-            </Text>
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>
+            {isEditing ? tr('transaction.edit', 'Modifier') : tr('transaction.add', 'Ajouter')}
+          </Text>
+          <View style={{ width: 60 }} />
         </View>
 
-        {/* Montant */}
-        <Text style={styles.label}>{tr('transaction.amount', 'Montant (€)')}</Text>
-        <TextInput
-          style={styles.input}
-          value={amount}
-          onChangeText={setAmount}
-          keyboardType="decimal-pad"
-          placeholder="0,00"
-          placeholderTextColor={theme.colors.textSecondary}
-        />
+        <ScrollView contentContainerStyle={styles.content}>
 
-        {/* Catégorie */}
-        <Text style={styles.label}>{tr('transaction.category', 'Catégorie')}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-          {categories.map((cat) => (
+          {/* Type */}
+          <Text style={styles.label}>{tr('transaction.type', 'Type')}</Text>
+          <View style={styles.typeRow}>
             <TouchableOpacity
-              key={cat}
-              style={[styles.categoryChip, category === cat && styles.categoryChipActive]}
-              onPress={() => setCategory(cat)}
+              style={[styles.typeButton, type === 'expense' && styles.typeButtonExpense]}
+              onPress={() => handleTypeChange('expense')}
             >
-              <Text style={[styles.categoryChipText, category === cat && styles.categoryChipTextActive]}>
-                {tr(getCategoryKey(cat), cat)}
+              <Text style={[styles.typeButtonText, type === 'expense' && styles.typeButtonTextActive]}>
+                💸 {tr('transaction.expense', 'Dépense')}
               </Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Note */}
-        <Text style={styles.label}>{tr('transaction.note', 'Note (optionnel)')}</Text>
-        <TextInput
-          style={[styles.input, styles.noteInput]}
-          value={note}
-          onChangeText={setNote}
-          placeholder={tr('transaction.notePlaceholder', 'Ajoute une note...')}
-          placeholderTextColor={theme.colors.textSecondary}
-          multiline
-        />
-
-        {/* Date */}
-        <Text style={styles.label}>{tr('transaction.date', 'Date (YYYY-MM-DD)')}</Text>
-        <TextInput
-          style={styles.input}
-          value={date}
-          onChangeText={setDate}
-          placeholder="2025-01-01"
-          placeholderTextColor={theme.colors.textSecondary}
-        />
-
-        <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
-          {loading
-            ? <ActivityIndicator color={theme.colors.surface} />
-            : <Text style={styles.buttonText}>
-                {isEditing ? tr('transaction.save', 'Enregistrer') : tr('transaction.add', 'Ajouter')}
+            <TouchableOpacity
+              style={[styles.typeButton, type === 'income' && styles.typeButtonIncome]}
+              onPress={() => handleTypeChange('income')}
+            >
+              <Text style={[styles.typeButtonText, type === 'income' && styles.typeButtonTextActive]}>
+                💰 {tr('transaction.income', 'Revenu')}
               </Text>
-          }
-        </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+          {/* Titre */}
+          <Text style={styles.label}>{tr('transaction.title', 'Titre (optionnel)')}</Text>
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
+            placeholder={tr('transaction.titlePlaceholder', `Ex: ${type === 'expense' ? 'Courses Auchan' : 'Salaire février'}`)}
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+          {/* Montant */}
+          <Text style={styles.label}>{tr('transaction.amount', 'Montant (€)')}</Text>
+          <TextInput
+            style={styles.input}
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="decimal-pad"
+            placeholder="0,00"
+            placeholderTextColor={theme.colors.textSecondary}
+          />
 
-      </ScrollView>
-    </SafeAreaView>
+          {/* Catégorie */}
+          <Text style={styles.label}>{tr('transaction.category', 'Catégorie')}</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+            {categories.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.categoryChip, category === cat && styles.categoryChipActive]}
+                onPress={() => setCategory(cat)}
+              >
+                <Text style={[styles.categoryChipText, category === cat && styles.categoryChipTextActive]}>
+                  {tr(getCategoryKey(cat), cat)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Note */}
+          <Text style={styles.label}>{tr('transaction.note', 'Note (optionnel)')}</Text>
+          <TextInput
+            style={[styles.input, styles.noteInput]}
+            value={note}
+            onChangeText={setNote}
+            placeholder={tr('transaction.notePlaceholder', 'Ajoute une note...')}
+            placeholderTextColor={theme.colors.textSecondary}
+            multiline
+          />
+
+          {/* Date */}
+          <Text style={styles.label}>{tr('transaction.date', 'Date (YYYY-MM-DD)')}</Text>
+          <TextInput
+            style={styles.input}
+            value={date}
+            onChangeText={setDate}
+            placeholder="2025-01-01"
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+
+          <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading}>
+            {loading
+              ? <ActivityIndicator color={theme.colors.surface} />
+              : <Text style={styles.buttonText}>
+                  {isEditing ? tr('transaction.save', 'Enregistrer') : tr('transaction.add', 'Ajouter')}
+                </Text>
+            }
+          </TouchableOpacity>
+
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
