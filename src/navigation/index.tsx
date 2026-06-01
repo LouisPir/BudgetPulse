@@ -16,6 +16,8 @@ import { AboutScreen } from '../screens/AboutScreen';
 import { Transaction } from '../types';
 import { StatsScreen } from '../screens/StatsScreen';
 import { BudgetScreen } from '../screens/BudgetScreen';
+import { ReimbursementProfilesScreen } from '../screens/ReimbursementProfilesScreen';
+import { PendingReimbursementsScreen } from '../screens/PendingReimbursementsScreen';
 
 type Screen =
   | 'Home'
@@ -28,6 +30,8 @@ type Screen =
   | 'Stats'
   | 'Budget'
   | 'ChangePassword'
+  | 'ReimbursementProfiles'
+  | 'PendingReimbursements'
   | 'Theme'
   | 'Language'
   | 'About';
@@ -51,6 +55,8 @@ const AppContent = () => {
       if (screen === 'Language') { setScreen('Settings'); return true; }
       if (screen === 'About') { setScreen('Settings'); return true; }
       if (screen === 'Stats') { setScreen('Settings'); return true; }
+      if (screen === 'ReimbursementProfiles') { setScreen('Settings'); return true; }
+      if (screen === 'PendingReimbursements') { setScreen('Settings'); return true; }
       return false;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
@@ -86,7 +92,13 @@ const AppContent = () => {
   if (screen === 'Stats') {
     return <StatsScreen onBack={() => setScreen('Settings')} />;
   }
+  if (screen === 'ReimbursementProfiles') {
+    return <ReimbursementProfilesScreen onBack={() => setScreen('Settings')} />;
+  }
 
+  if (screen === 'PendingReimbursements') {
+    return <PendingReimbursementsScreen onBack={() => setScreen('Settings')} />;
+  }
   if (screen === 'EditTransaction' && selectedTransaction) {
     return (
       <AddTransactionScreen
@@ -108,6 +120,8 @@ const AppContent = () => {
         onAbout={() => setScreen('About')}
         onStats={() => setScreen('Stats')}
         onBudget={() => setScreen('Budget')}
+        onReimbursementProfiles={() => setScreen('ReimbursementProfiles')}
+        onPendingReimbursements={() => setScreen('PendingReimbursements')}
       />
     );
   }

@@ -56,10 +56,13 @@ export const StatsScreen = ({ onBack }: Props) => {
   const isCurrentMonth = currentDate.getMonth() === new Date().getMonth() &&
     currentDate.getFullYear() === new Date().getFullYear();
 
-  const filtered = transactions.filter((t) => {
-    const d = new Date(t.date);
-    return d.getFullYear() === currentDate.getFullYear() && d.getMonth() === currentDate.getMonth();
-  });
+  const filtered = transactions
+    .filter((t) => {
+      const d = new Date(t.date);
+      return d.getFullYear() === currentDate.getFullYear() && 
+            d.getMonth() === currentDate.getMonth();
+    })
+    .filter((t) => t.reimbursement_status !== 'reimbursed');
 
   const totalIncome = filtered.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const totalExpense = filtered.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);

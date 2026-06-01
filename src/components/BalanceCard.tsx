@@ -14,6 +14,7 @@ export const BalanceCard = ({ transactions }: Props) => {
   const { tr } = useLanguage();
   const styles = makeStyles(theme);
 
+  const filtered = transactions.filter((t) => t.reimbursement_status !== 'reimbursed');
   const totalIncome = transactions.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const totalExpense = transactions.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const balance = totalIncome - totalExpense;

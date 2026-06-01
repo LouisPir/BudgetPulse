@@ -28,6 +28,16 @@ export const TransactionCard = ({ transaction, onEdit, onDelete }: Props) => {
         </Text>
         {transaction.note && <Text style={styles.note}>{transaction.note}</Text>}
         <Text style={styles.date}>{transaction.date}</Text>
+        {transaction.reimbursement_status === 'pending' && (
+          <View style={styles.badge}>
+            <Text style={styles.badgePending}>🕐 {tr('transaction.reimbursement.pending', 'À rembourser')}</Text>
+          </View>
+        )}
+        {transaction.reimbursement_status === 'reimbursed' && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeReimbursed}>✅ {tr('transaction.reimbursement.reimbursed', 'Remboursé')}</Text>
+          </View>
+        )}
       </View>
       <View style={styles.right}>
         <Text style={[styles.amount, transaction.type === 'income' ? styles.income : styles.expense]}>
@@ -67,4 +77,7 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
   actionIcon: { fontSize: theme.fontSize.lg },
   income: { color: theme.colors.success },
   expense: { color: theme.colors.danger },
+  badge: { marginTop: 4 },
+  badgePending: { fontSize: theme.fontSize.sm, color: theme.colors.warning, fontWeight: '600' },
+  badgeReimbursed: { fontSize: theme.fontSize.sm, color: theme.colors.success, fontWeight: '600' },
 });
