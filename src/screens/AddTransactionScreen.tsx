@@ -6,19 +6,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { Theme } from '../config/theme';
 import { addTransaction, updateTransaction } from '../services/transactions';
 import { Transaction } from '../types';
-
-const CATEGORIES = [
-  'Alimentation',
-  'Transport',
-  'Loisirs',
-  'Santé',
-  'Logement',
-  'Vêtements',
-  'Éducation',
-  'Restauration',
-  'Voyages',
-  'Autre',
-];
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../constants/categories';
+import { getCategoryKey } from '../utils/format';
 
 interface Props {
   onBack: () => void;
@@ -33,12 +22,19 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
 
   const [amount, setAmount] = useState(transaction ? String(transaction.amount / 100) : '');
   const [type, setType] = useState<'expense' | 'income'>(transaction?.type ?? 'expense');
-  const [category, setCategory] = useState(transaction?.category ?? CATEGORIES[0]);
+  const [category, setCategory] = useState(transaction?.category ?? EXPENSE_CATEGORIES[0]);
   const [note, setNote] = useState(transaction?.note ?? '');
   const [date, setDate] = useState(transaction?.date ?? new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
 
   const isEditing = !!transaction;
+  const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+
+  const handleTypeChange = (newType: 'expense' | 'income') => {
+    setType(newType);
+    const newCategories = newType === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+    setCategory(newCategories[0]);
+  };
 
   const handleSubmit = async () => {
     const parsedAmount = parseFloat(amount.replace(',', '.'));
@@ -83,23 +79,24 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+
         {/* Type */}
         <Text style={styles.label}>{tr('transaction.type', 'Type')}</Text>
         <View style={styles.typeRow}>
           <TouchableOpacity
-            style={[styles.typeButton, type === 'expense' && styles.typeButtonActive]}
-            onPress={() => setType('expense')}
+            style={[styles.typeButton, type === 'expense' && styles.typeButtonExpense]}
+            onPress={() => handleTypeChange('expense')}
           >
             <Text style={[styles.typeButtonText, type === 'expense' && styles.typeButtonTextActive]}>
-              {tr('transaction.expense', 'Dépense')}
+              💸 {tr('transaction.expense', 'Dépense')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.typeButton, type === 'income' && styles.typeButtonActiveIncome]}
-            onPress={() => setType('income')}
+            style={[styles.typeButton, type === 'income' && styles.typeButtonIncome]}
+            onPress={() => handleTypeChange('income')}
           >
             <Text style={[styles.typeButtonText, type === 'income' && styles.typeButtonTextActive]}>
-              {tr('transaction.income', 'Revenu')}
+              💰 {tr('transaction.income', 'Revenu')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -118,14 +115,14 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
         {/* Catégorie */}
         <Text style={styles.label}>{tr('transaction.category', 'Catégorie')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <TouchableOpacity
               key={cat}
               style={[styles.categoryChip, category === cat && styles.categoryChipActive]}
               onPress={() => setCategory(cat)}
             >
               <Text style={[styles.categoryChipText, category === cat && styles.categoryChipTextActive]}>
-                {cat}
+                {tr(getCategoryKey(cat), cat)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -160,6 +157,7 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
               </Text>
           }
         </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -168,62 +166,42 @@ export const AddTransactionScreen = ({ onBack, onSuccess, transaction }: Props) 
 const makeStyles = (theme: Theme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    padding: theme.spacing.lg, backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1, borderBottomColor: theme.colors.border,
   },
   backText: { color: theme.colors.primary, fontSize: theme.fontSize.lg, fontWeight: '600', width: 60 },
   headerTitle: { fontSize: theme.fontSize.lg, fontWeight: 'bold', color: theme.colors.text },
   content: { padding: theme.spacing.lg, gap: theme.spacing.sm },
   label: { fontSize: theme.fontSize.md, fontWeight: '600', color: theme.colors.text, marginBottom: theme.spacing.xs },
   input: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    marginBottom: theme.spacing.md,
+    backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md, fontSize: theme.fontSize.md, color: theme.colors.text,
+    borderWidth: 1, borderColor: theme.colors.border, marginBottom: theme.spacing.md,
   },
   noteInput: { height: 80, textAlignVertical: 'top' },
   typeRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.md },
   typeButton: {
-    flex: 1,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    alignItems: 'center',
+    flex: 1, padding: theme.spacing.md, borderRadius: theme.borderRadius.md,
+    borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center',
     backgroundColor: theme.colors.surface,
   },
-  typeButtonActive: { backgroundColor: theme.colors.danger, borderColor: theme.colors.danger },
-  typeButtonActiveIncome: { backgroundColor: theme.colors.success, borderColor: theme.colors.success },
+  typeButtonExpense: { backgroundColor: theme.colors.danger, borderColor: theme.colors.danger },
+  typeButtonIncome: { backgroundColor: theme.colors.success, borderColor: theme.colors.success },
   typeButtonText: { fontSize: theme.fontSize.md, fontWeight: '600', color: theme.colors.textSecondary },
   typeButtonTextActive: { color: theme.colors.surface },
   categoryScroll: { marginBottom: theme.spacing.md },
   categoryChip: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    marginRight: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full, backgroundColor: theme.colors.surface,
+    borderWidth: 1, borderColor: theme.colors.border, marginRight: theme.spacing.sm,
   },
   categoryChipActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
   categoryChipText: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary },
   categoryChipTextActive: { color: theme.colors.surface },
   button: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    alignItems: 'center',
-    marginTop: theme.spacing.md,
+    backgroundColor: theme.colors.primary, borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md, alignItems: 'center', marginTop: theme.spacing.md,
   },
   buttonText: { color: theme.colors.surface, fontSize: theme.fontSize.lg, fontWeight: '600' },
 });

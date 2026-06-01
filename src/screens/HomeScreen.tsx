@@ -1,27 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Theme } from '../config/theme';
 import { getTransactions, deleteTransaction } from '../services/transactions';
 import { Transaction } from '../types';
-import { logout } from '../services/auth';
+import { BalanceCard } from '../components/BalanceCard';
+import { TransactionCard } from '../components/TransactionCard';
+import { FilterModal, SortOption, PeriodOption } from '../components/FilterModal';
 
 interface Props {
   onAddTransaction: () => void;
   onEditTransaction: (transaction: Transaction) => void;
   onSettings: () => void;
 }
-
-const formatAmount = (cents: number): string => {
-  return (cents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
-};
-
-const getCurrentMonth = (): { year: number; month: number } => {
-  const now = new Date();
-  return { year: now.getFullYear(), month: now.getMonth() + 1 };
-};
 
 export const HomeScreen = ({ onAddTransaction, onEditTransaction, onSettings }: Props) => {
   const { theme } = useTheme();
@@ -30,22 +23,13 @@ export const HomeScreen = ({ onAddTransaction, onEditTransaction, onSettings }: 
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const { year, month } = getCurrentMonth();
+  const [search, setSearch] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const filteredTransactions = transactions.filter((t) => {
-    const d = new Date(t.date);
-    return d.getFullYear() === year && d.getMonth() + 1 === month;
-  });
-
-  const totalIncome = filteredTransactions
-    .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalExpense = filteredTransactions
-    .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const balance = totalIncome - totalExpense;
+  const [activeCategories, setActiveCategories] = useState<string[]>([]);
+  const [activeType, setActiveType] = useState<'expense' | 'income' | null>(null);
+  const [activePeriod, setActivePeriod] = useState<PeriodOption>('this_month');
+  const [activeSort, setActiveSort] = useState<SortOption>('date_newest');
 
   const loadTransactions = useCallback(async () => {
     setLoading(true);
@@ -59,9 +43,51 @@ export const HomeScreen = ({ onAddTransaction, onEditTransaction, onSettings }: 
     }
   }, []);
 
-  useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+  useEffect(() => { loadTransactions(); }, [loadTransactions]);
+
+  const getFiltered = (): Transaction[] => {
+    let result = [...transactions];
+    const now = new Date();
+
+    if (activePeriod === 'this_month') {
+      result = result.filter((t) => {
+        const d = new Date(t.date);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      });
+    } else if (activePeriod === 'last_month') {
+      const last = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      result = result.filter((t) => {
+        const d = new Date(t.date);
+        return d.getFullYear() === last.getFullYear() && d.getMonth() === last.getMonth();
+      });
+    } else if (activePeriod === 'last_3_months') {
+      const limit = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+      result = result.filter((t) => new Date(t.date) >= limit);
+    }
+
+    if (search.trim()) {
+      result = result.filter((t) =>
+        t.category.toLowerCase().includes(search.toLowerCase()) ||
+        t.note?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    if (activeType) result = result.filter((t) => t.type === activeType);
+    if (activeCategories.length > 0) result = result.filter((t) => activeCategories.includes(t.category));
+
+    result.sort((a, b) => {
+      if (activeSort === 'date_newest') return new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (activeSort === 'date_oldest') return new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (activeSort === 'amount_asc') return a.amount - b.amount;
+      if (activeSort === 'amount_desc') return b.amount - a.amount;
+      return 0;
+    });
+
+    return result;
+  };
+
+  const filtered = getFiltered();
+  const hasActiveFilters = activeCategories.length > 0 || activeType !== null || activePeriod !== 'this_month';
 
   const handleDelete = (id: string) => {
     Alert.alert(
@@ -70,51 +96,22 @@ export const HomeScreen = ({ onAddTransaction, onEditTransaction, onSettings }: 
       [
         { text: tr('cancel', 'Annuler'), style: 'cancel' },
         {
-          text: tr('delete', 'Supprimer'),
-          style: 'destructive',
+          text: tr('delete', 'Supprimer'), style: 'destructive',
           onPress: async () => {
-            try {
-              await deleteTransaction(id);
-              loadTransactions();
-            } catch (error: any) {
-              Alert.alert(tr('error.title', 'Erreur'), error.message);
-            }
+            try { await deleteTransaction(id); loadTransactions(); }
+            catch (error: any) { Alert.alert(tr('error.title', 'Erreur'), error.message); }
           },
         },
       ]
     );
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error: any) {
-      Alert.alert(tr('error.title', 'Erreur'), error.message);
-    }
+  const handleReset = () => {
+    setActiveCategories([]);
+    setActiveType(null);
+    setActivePeriod('this_month');
+    setActiveSort('date_newest');
   };
-
-  const renderTransaction = ({ item }: { item: Transaction }) => (
-    <View style={styles.transactionCard}>
-      <View style={styles.transactionLeft}>
-        <Text style={styles.transactionCategory}>{item.category}</Text>
-        {item.note && <Text style={styles.transactionNote}>{item.note}</Text>}
-        <Text style={styles.transactionDate}>{item.date}</Text>
-      </View>
-      <View style={styles.transactionRight}>
-        <Text style={[styles.transactionAmount, item.type === 'income' ? styles.income : styles.expense]}>
-          {item.type === 'income' ? '+' : '-'}{formatAmount(item.amount)}
-        </Text>
-        <View style={styles.transactionActions}>
-          <TouchableOpacity onPress={() => onEditTransaction(item)}>
-            <Text style={styles.actionEdit}>{tr('edit', '✏️')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleDelete(item.id)}>
-            <Text style={styles.actionDelete}>{tr('delete', '🗑️')}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -125,44 +122,69 @@ export const HomeScreen = ({ onAddTransaction, onEditTransaction, onSettings }: 
         </TouchableOpacity>
       </View>
 
-      {/* Solde */}
-      <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>{tr('home.balance', 'Solde du mois')}</Text>
-        <Text style={[styles.balanceAmount, balance >= 0 ? styles.income : styles.expense]}>
-          {formatAmount(balance)}
-        </Text>
-        <View style={styles.balanceRow}>
-          <View style={styles.balanceItem}>
-            <Text style={styles.balanceItemLabel}>{tr('home.income', 'Revenus')}</Text>
-            <Text style={[styles.balanceItemAmount, styles.income]}>+{formatAmount(totalIncome)}</Text>
-          </View>
-          <View style={styles.balanceSeparator} />
-          <View style={styles.balanceItem}>
-            <Text style={styles.balanceItemLabel}>{tr('home.expenses', 'Dépenses')}</Text>
-            <Text style={[styles.balanceItemAmount, styles.expense]}>-{formatAmount(totalExpense)}</Text>
-          </View>
+      <BalanceCard transactions={filtered} />
+
+      <View style={styles.searchRow}>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder={tr('home.search', '🔍 Rechercher...')}
+            value={search}
+            onChangeText={setSearch}
+            placeholderTextColor={theme.colors.textSecondary}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')}>
+              <Text style={styles.clearSearch}>✕</Text>
+            </TouchableOpacity>
+          )}
         </View>
+        <TouchableOpacity
+          style={[styles.filterButton, hasActiveFilters && styles.filterButtonActive]}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.filterButtonIcon}>🪄</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Liste */}
       {loading ? (
         <ActivityIndicator style={{ marginTop: 40 }} size="large" color={theme.colors.primary} />
       ) : (
         <FlatList
-          data={filteredTransactions}
+          data={filtered}
           keyExtractor={(item) => item.id}
-          renderItem={renderTransaction}
+          renderItem={({ item }) => (
+            <TransactionCard
+              transaction={item}
+              onEdit={onEditTransaction}
+              onDelete={handleDelete}
+            />
+          )}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <Text style={styles.empty}>{tr('home.empty', 'Aucune transaction ce mois-ci')}</Text>
+            <Text style={styles.empty}>{tr('home.empty', 'Aucune transaction')}</Text>
           }
         />
       )}
 
-      {/* Bouton ajout */}
       <TouchableOpacity style={styles.fab} onPress={onAddTransaction}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
+
+      <FilterModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        activeCategories={activeCategories}
+        activeType={activeType}
+        activePeriod={activePeriod}
+        activeSort={activeSort}
+        onToggleCategory={(cat) => setActiveCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat])}
+        onSetType={setActiveType}
+        onSetPeriod={setActivePeriod}
+        onSetSort={setActiveSort}
+        onReset={handleReset}
+        hasActiveFilters={hasActiveFilters}
+      />
     </SafeAreaView>
   );
 };
@@ -170,70 +192,37 @@ export const HomeScreen = ({ onAddTransaction, onEditTransaction, onSettings }: 
 const makeStyles = (theme: Theme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    padding: theme.spacing.lg, backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1, borderBottomColor: theme.colors.border,
   },
   headerTitle: { fontSize: theme.fontSize.xl, fontWeight: 'bold', color: theme.colors.text },
-  logoutText: { color: theme.colors.danger, fontSize: theme.fontSize.md },
-  balanceCard: {
-    margin: theme.spacing.lg,
-    padding: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+  searchRow: {
+    flexDirection: 'row', alignItems: 'center',
+    marginHorizontal: theme.spacing.lg, marginBottom: theme.spacing.md, gap: theme.spacing.sm,
   },
-  balanceLabel: { fontSize: theme.fontSize.md, color: theme.colors.textSecondary, marginBottom: theme.spacing.xs },
-  balanceAmount: { fontSize: theme.fontSize.title, fontWeight: 'bold', marginBottom: theme.spacing.md },
-  balanceRow: { flexDirection: 'row', alignItems: 'center' },
-  balanceItem: { flex: 1, alignItems: 'center' },
-  balanceItemLabel: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary },
-  balanceItemAmount: { fontSize: theme.fontSize.lg, fontWeight: '600' },
-  balanceSeparator: { width: 1, height: 30, backgroundColor: theme.colors.border },
-  income: { color: theme.colors.success },
-  expense: { color: theme.colors.danger },
-  list: { padding: theme.spacing.lg, paddingBottom: 100 },
-  transactionCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+  searchContainer: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.full,
+    borderWidth: 1, borderColor: theme.colors.border, paddingHorizontal: theme.spacing.md,
   },
-  transactionLeft: { flex: 1 },
-  transactionCategory: { fontSize: theme.fontSize.md, fontWeight: '600', color: theme.colors.text },
-  transactionNote: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary, marginTop: 2 },
-  transactionDate: { fontSize: theme.fontSize.sm, color: theme.colors.textSecondary, marginTop: 2 },
-  transactionRight: { alignItems: 'flex-end' },
-  transactionAmount: { fontSize: theme.fontSize.lg, fontWeight: 'bold' },
-  transactionActions: { flexDirection: 'row', gap: theme.spacing.sm, marginTop: theme.spacing.xs },
-  actionEdit: { fontSize: theme.fontSize.lg },
-  actionDelete: { fontSize: theme.fontSize.lg },
+  searchInput: { flex: 1, padding: theme.spacing.md, fontSize: theme.fontSize.md, color: theme.colors.text },
+  clearSearch: { color: theme.colors.textSecondary, fontSize: theme.fontSize.lg, padding: theme.spacing.sm },
+  filterButton: {
+    width: 44, height: 44, borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  filterButtonActive: { borderColor: theme.colors.primary, backgroundColor: theme.colors.accent },
+  filterButtonIcon: { fontSize: 20 },
+  list: { paddingHorizontal: theme.spacing.lg, paddingBottom: 100 },
   empty: { textAlign: 'center', color: theme.colors.textSecondary, marginTop: 40, fontSize: theme.fontSize.md },
   fab: {
-    position: 'absolute',
-    bottom: theme.spacing.xl,
-    right: theme.spacing.xl,
-    width: 56,
-    height: 56,
-    borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    position: 'absolute', bottom: theme.spacing.xl, right: theme.spacing.xl,
+    width: 56, height: 56, borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center',
+    elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, shadowRadius: 4,
   },
   fabText: { color: theme.colors.surface, fontSize: 28, fontWeight: 'bold' },
 });
