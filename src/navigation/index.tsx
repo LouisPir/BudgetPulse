@@ -18,6 +18,7 @@ import { StatsScreen } from '../screens/StatsScreen';
 import { BudgetScreen } from '../screens/BudgetScreen';
 import { ReimbursementProfilesScreen } from '../screens/ReimbursementProfilesScreen';
 import { PendingReimbursementsScreen } from '../screens/PendingReimbursementsScreen';
+import { ExportScreen } from '../screens/ExportScreen';
 
 type Screen =
   | 'Home'
@@ -27,6 +28,7 @@ type Screen =
   | 'EditTransaction'
   | 'Settings'
   | 'ChangeEmail'
+  | 'Export'
   | 'Stats'
   | 'Budget'
   | 'ChangePassword'
@@ -54,6 +56,7 @@ const AppContent = () => {
       if (screen === 'Budget') { setScreen('Settings'); return true; }
       if (screen === 'Language') { setScreen('Settings'); return true; }
       if (screen === 'About') { setScreen('Settings'); return true; }
+      if (screen === 'Export') { setScreen('Settings'); return true; }
       if (screen === 'Stats') { setScreen('Settings'); return true; }
       if (screen === 'ReimbursementProfiles') { setScreen('Settings'); return true; }
       if (screen === 'PendingReimbursements') { setScreen('Settings'); return true; }
@@ -85,6 +88,9 @@ const AppContent = () => {
         onSuccess={() => setScreen('Home')}
       />
     );
+  }
+  if (screen === 'Export') {
+    return <ExportScreen onBack={() => setScreen('Settings')} />;
   }
   if (screen === 'Budget') {
     return <BudgetScreen onBack={() => setScreen('Settings')} />;
@@ -122,6 +128,7 @@ const AppContent = () => {
         onBudget={() => setScreen('Budget')}
         onReimbursementProfiles={() => setScreen('ReimbursementProfiles')}
         onPendingReimbursements={() => setScreen('PendingReimbursements')}
+        onExport={() => setScreen('Export')}
       />
     );
   }

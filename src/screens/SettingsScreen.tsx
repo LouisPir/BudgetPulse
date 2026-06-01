@@ -16,10 +16,11 @@ interface Props {
   onBudget: () => void;
   onReimbursementProfiles: () => void;
   onPendingReimbursements: () => void;
+  onExport: () => void;
 }
 
 
-export const SettingsScreen = ({ onBack, onChangeEmail, onChangePassword, onTheme, onLanguage, onAbout, onStats, onBudget, onPendingReimbursements, onReimbursementProfiles }: Props) => {
+export const SettingsScreen = ({ onBack, onChangeEmail, onChangePassword, onTheme, onLanguage, onAbout, onStats, onBudget, onPendingReimbursements, onReimbursementProfiles, onExport }: Props) => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { tr } = useLanguage();
@@ -60,8 +61,14 @@ export const SettingsScreen = ({ onBack, onChangeEmail, onChangePassword, onThem
             <Text style={styles.rowText}>📊 {tr('settings.stats', 'Statistiques')}</Text>
             <Text style={styles.rowArrow}>›</Text>
           </TouchableOpacity>
+          <View style={styles.separator} />
           <TouchableOpacity style={styles.row} onPress={onBudget}>
             <Text style={styles.rowText}>🎯 {tr('settings.budget', 'Budgets')}</Text>
+            <Text style={styles.rowArrow}>›</Text>
+          </TouchableOpacity>
+            <View style={styles.separator} />
+          <TouchableOpacity style={styles.row} onPress={onExport}>
+            <Text style={styles.rowText}>📤 {tr('settings.export', 'Export PDF')}</Text>
             <Text style={styles.rowArrow}>›</Text>
           </TouchableOpacity>
         </View>
