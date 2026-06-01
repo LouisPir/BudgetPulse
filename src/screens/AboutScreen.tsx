@@ -21,10 +21,10 @@ export const AboutScreen = ({ onBack }: { onBack: () => void }) => {
       </View>
       <View style={styles.content}>
         <View style={styles.appInfo}>
-          <Text style={styles.emoji}>🌸</Text>
-          <Text style={styles.appName}>Tankobon</Text>
+          <Text style={styles.emoji}>💰</Text>
+          <Text style={styles.appName}>BudgetPulse</Text>
           <Text style={styles.appVersion}>Version {version}</Text>
-          <Text style={styles.appDescription}>{tr('about.description', 'Suis ta progression de lecture de mangas, anime, films et bien plus encore.')}</Text>
+          <Text style={styles.appDescription}>{tr('about.description', 'Suis tes dépenses, revenus et budgets au quotidien.')}</Text>
         </View>
         <View style={styles.section}>
           <TouchableOpacity style={styles.row} onPress={() => Linking.openURL('https://github.com/LouisPir/BudgetPulse')}>
@@ -43,7 +43,7 @@ export const AboutScreen = ({ onBack }: { onBack: () => void }) => {
             <Text style={styles.rowValue}>Expo + Supabase</Text>
           </View>
         </View>
-        <Text style={styles.footer}>{tr('about.footer', 'Fait avec 🌸')}</Text>
+        <Text style={styles.footer}>{tr('about.footer', 'Fait avec 💰')}</Text>
       </View>
     </SafeAreaView>
   );

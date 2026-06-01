@@ -1,6 +1,6 @@
 {
   "name": "budgetpulse",
-  "version": "1.0.1",
+  "version": "v1.1.0",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
