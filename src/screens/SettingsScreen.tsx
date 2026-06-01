@@ -13,10 +13,11 @@ interface Props {
   onLanguage: () => void;
   onAbout: () => void;
   onStats: () => void;
+  onBudget: () => void;
 }
 
 
-export const SettingsScreen = ({ onBack, onChangeEmail, onChangePassword, onTheme, onLanguage, onAbout, onStats }: Props) => {
+export const SettingsScreen = ({ onBack, onChangeEmail, onChangePassword, onTheme, onLanguage, onAbout, onStats, onBudget }: Props) => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const { tr } = useLanguage();
@@ -51,7 +52,17 @@ export const SettingsScreen = ({ onBack, onChangeEmail, onChangePassword, onThem
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + theme.spacing.lg }]}>
-
+        <Text style={styles.sectionTitle}>{tr('settings.analysis', 'Analyse')}</Text>
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.row} onPress={onStats}>
+            <Text style={styles.rowText}>📊 {tr('settings.stats', 'Statistiques')}</Text>
+            <Text style={styles.rowArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.row} onPress={onBudget}>
+            <Text style={styles.rowText}>🎯 {tr('settings.budget', 'Budgets')}</Text>
+            <Text style={styles.rowArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.sectionTitle}>{tr('settings.account', 'Compte')}</Text>
         <View style={styles.section}>
           <TouchableOpacity style={styles.row} onPress={onChangeEmail}>
@@ -74,13 +85,6 @@ export const SettingsScreen = ({ onBack, onChangeEmail, onChangePassword, onThem
           <View style={styles.separator} />
           <TouchableOpacity style={styles.row} onPress={onLanguage}>
             <Text style={styles.rowText}>🌍 {tr('settings.language', 'Langue')}</Text>
-            <Text style={styles.rowArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.sectionTitle}>{tr('settings.analysis', 'Analyse')}</Text>
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.row} onPress={onStats}>
-            <Text style={styles.rowText}>📊 {tr('settings.stats', 'Statistiques')}</Text>
             <Text style={styles.rowArrow}>›</Text>
           </TouchableOpacity>
         </View>
