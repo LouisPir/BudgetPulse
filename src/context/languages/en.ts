@@ -124,6 +124,17 @@ const en: Record<string, string> = {
   'stats.empty': 'No transactions this month',
   'settings.analysis': 'Analysis',
   'settings.stats': 'Statistics',
+  'budget.title': 'Budgets',
+  'budget.active': 'Active budgets',
+  'budget.add': 'Add a budget',
+  'budget.setFor': 'Budget for',
+  'budget.save': 'Save',
+  'budget.exceeded': 'Budget exceeded!',
+  'budget.approaching': 'Budget almost reached',
+  'budget.deleteTitle': 'Delete',
+  'budget.deleteConfirm': 'Delete this budget?',
+  'budget.invalidAmount': 'Invalid amount.',
+  'settings.budget': 'Budgets',
 };
 
 export default en;

@@ -15,6 +15,7 @@ import { LanguageScreen } from '../screens/LanguageScreen';
 import { AboutScreen } from '../screens/AboutScreen';
 import { Transaction } from '../types';
 import { StatsScreen } from '../screens/StatsScreen';
+import { BudgetScreen } from '../screens/BudgetScreen';
 
 type Screen =
   | 'Home'
@@ -25,6 +26,7 @@ type Screen =
   | 'Settings'
   | 'ChangeEmail'
   | 'Stats'
+  | 'Budget'
   | 'ChangePassword'
   | 'Theme'
   | 'Language'
@@ -45,6 +47,7 @@ const AppContent = () => {
       if (screen === 'ChangeEmail') { setScreen('Settings'); return true; }
       if (screen === 'ChangePassword') { setScreen('Settings'); return true; }
       if (screen === 'Theme') { setScreen('Settings'); return true; }
+      if (screen === 'Budget') { setScreen('Settings'); return true; }
       if (screen === 'Language') { setScreen('Settings'); return true; }
       if (screen === 'About') { setScreen('Settings'); return true; }
       if (screen === 'Stats') { setScreen('Settings'); return true; }
@@ -77,6 +80,9 @@ const AppContent = () => {
       />
     );
   }
+  if (screen === 'Budget') {
+    return <BudgetScreen onBack={() => setScreen('Settings')} />;
+  }
   if (screen === 'Stats') {
     return <StatsScreen onBack={() => setScreen('Settings')} />;
   }
@@ -101,6 +107,7 @@ const AppContent = () => {
         onLanguage={() => setScreen('Language')}
         onAbout={() => setScreen('About')}
         onStats={() => setScreen('Stats')}
+        onBudget={() => setScreen('Budget')}
       />
     );
   }
