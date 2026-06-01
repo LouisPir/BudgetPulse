@@ -14,6 +14,7 @@ import { ThemeScreen } from '../screens/ThemeScreen';
 import { LanguageScreen } from '../screens/LanguageScreen';
 import { AboutScreen } from '../screens/AboutScreen';
 import { Transaction } from '../types';
+import { StatsScreen } from '../screens/StatsScreen';
 
 type Screen =
   | 'Home'
@@ -23,6 +24,7 @@ type Screen =
   | 'EditTransaction'
   | 'Settings'
   | 'ChangeEmail'
+  | 'Stats'
   | 'ChangePassword'
   | 'Theme'
   | 'Language'
@@ -45,6 +47,7 @@ const AppContent = () => {
       if (screen === 'Theme') { setScreen('Settings'); return true; }
       if (screen === 'Language') { setScreen('Settings'); return true; }
       if (screen === 'About') { setScreen('Settings'); return true; }
+      if (screen === 'Stats') { setScreen('Settings'); return true; }
       return false;
     };
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
@@ -74,6 +77,9 @@ const AppContent = () => {
       />
     );
   }
+  if (screen === 'Stats') {
+    return <StatsScreen onBack={() => setScreen('Settings')} />;
+  }
 
   if (screen === 'EditTransaction' && selectedTransaction) {
     return (
@@ -94,6 +100,7 @@ const AppContent = () => {
         onTheme={() => setScreen('Theme')}
         onLanguage={() => setScreen('Language')}
         onAbout={() => setScreen('About')}
+        onStats={() => setScreen('Stats')}
       />
     );
   }

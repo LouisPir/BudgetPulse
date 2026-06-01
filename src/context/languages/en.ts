@@ -117,6 +117,13 @@ const en: Record<string, string> = {
 
   'transaction.title': 'Title (optional)',
   'transaction.titlePlaceholder': 'Ex: Auchan groceries',
+  'stats.title': 'Statistics',
+  'stats.summary': 'Monthly summary',
+  'stats.expenseChart': 'Expenses by category',
+  'stats.incomeChart': 'Income by category',
+  'stats.empty': 'No transactions this month',
+  'settings.analysis': 'Analysis',
+  'settings.stats': 'Statistics',
 };
 
 export default en;
