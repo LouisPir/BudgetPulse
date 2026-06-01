@@ -2,7 +2,7 @@
   "expo": {
     "name": "BudgetPulse",
     "slug": "BudgetPulse",
-    "version": "v1.4.0",
+    "version": "v1.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
